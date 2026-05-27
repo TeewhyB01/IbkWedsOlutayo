@@ -17,6 +17,22 @@ type SendProviderResult = {
   message: string;
 };
 
+type EmailAttachment = {
+  filename: string;
+  content: string;
+  contentType?: string;
+  contentId?: string;
+};
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function buildQrPayload({
   guest,
   rsvp,
@@ -24,14 +40,21 @@ export function buildQrPayload({
   guest: GuestRecord;
   rsvp?: RSVPRecord | null;
 }) {
+  const guestName = rsvp?.full_name ?? guest.guest_name;
+  const checkInRef = `${guest.invitation_code}-${guest.id.slice(-6).toUpperCase()}`;
+
   return JSON.stringify({
-    code: guest.invitation_code,
+    type: "becoming-the-bensons-check-in",
+    version: 1,
+    invitationCode: guest.invitation_code,
+    checkInRef,
     guestId: guest.id,
-    name: rsvp?.full_name ?? guest.guest_name,
+    name: guestName,
     guestCount: rsvp?.guest_count ?? guest.allowed_guest_count,
     traditional: rsvp?.attending_traditional ?? null,
     finale: rsvp?.attending_finale ?? null,
     wedding: couple.hashtag,
+    issuedAt: new Date().toISOString(),
   });
 }
 
@@ -51,34 +74,106 @@ export function buildInvitationEmailHtml({
   guest,
   rsvp,
   qrCodeDataUrl,
+  qrImageSrc,
   invitationCardUrl,
 }: {
   guest: GuestRecord;
   rsvp?: RSVPRecord | null;
   qrCodeDataUrl: string;
+  qrImageSrc?: string;
   invitationCardUrl: string;
 }) {
-  const guestName = rsvp?.full_name ?? guest.guest_name;
+  const guestName = escapeHtml(rsvp?.full_name ?? guest.guest_name);
+  const invitationCode = escapeHtml(guest.invitation_code);
+  const guestCount = rsvp?.guest_count ?? guest.allowed_guest_count;
+  const attendingEvents = [
+    rsvp?.attending_traditional ? "Traditional Wedding" : null,
+    rsvp?.attending_finale ? "The Grand Finale" : null,
+  ].filter(Boolean);
+  const eventText = attendingEvents.length
+    ? attendingEvents.join(" & ")
+    : "Attendance details saved";
+  const checkInRef = `${guest.invitation_code}-${guest.id.slice(-6).toUpperCase()}`;
+  const qrSrc = qrImageSrc ?? qrCodeDataUrl;
 
   return `
-    <div style="font-family: Manrope, Arial, sans-serif; color:#0b3d31; background:#fbf6ec; padding:32px;">
-      <div style="max-width:640px; margin:0 auto; background:#fffaf0; border:1px solid #dcc58d; border-radius:28px; overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#7a1f35,#0b513f); color:#fbf6ec; padding:32px;">
-          <p style="letter-spacing:.18em; text-transform:uppercase; font-size:12px; color:#e3c98f;">${couple.hashtag}</p>
-          <h1 style="font-family: Georgia, serif; font-size:42px; line-height:.95; margin:12px 0 0;">Your wedding invitation</h1>
-          <p style="margin:18px 0 0; color:rgba(251,246,236,.78);">Hello ${guestName}, thank you for confirming your RSVP.</p>
-        </div>
-        <div style="padding:30px;">
-          <p style="font-size:14px; line-height:1.8;">Please present this QR code at guest check-in. It is linked to invitation code <strong>${guest.invitation_code}</strong>.</p>
-          <div style="text-align:center; margin:28px 0;">
-            <img src="${qrCodeDataUrl}" alt="Guest invitation QR code" width="220" height="220" style="border-radius:18px; border:1px solid #dcc58d;" />
-          </div>
-          <p style="font-size:14px; line-height:1.8;">Invitation card sample: <a href="${invitationCardUrl}" style="color:#7a1f35;">View invitation card</a></p>
-          <p style="margin-top:28px; color:#6f6a5c; font-size:13px;">With love,<br/>Ibukunoluwa & Olutayo</p>
-        </div>
-      </div>
+    <div style="margin:0; padding:0; background:#f8f1e6;">
+      <div style="display:none; overflow:hidden; line-height:1px; opacity:0; max-height:0; max-width:0;">Your ${couple.hashtag} RSVP is confirmed. Your personal QR code is inside.</div>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8f1e6; font-family:Arial, Helvetica, sans-serif; color:#143f34;">
+        <tr>
+          <td align="center" style="padding:34px 16px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#fffaf0; border:1px solid #dec88c;">
+              <tr>
+                <td style="background:#0b3d31; padding:34px 34px 28px; border-bottom:5px solid #7a1f35;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="font-family:Georgia, 'Times New Roman', serif; font-size:46px; line-height:46px; color:#f8f1e6; width:64px;">B</td>
+                      <td align="right" style="font-size:11px; line-height:18px; letter-spacing:2px; text-transform:uppercase; color:#e1c783; font-weight:bold;">${couple.hashtag}</td>
+                    </tr>
+                  </table>
+                  <h1 style="font-family:Georgia, 'Times New Roman', serif; color:#fffaf0; font-size:44px; line-height:46px; font-weight:normal; margin:34px 0 10px;">Your invitation is confirmed</h1>
+                  <p style="margin:0; color:#e8dcc6; font-size:15px; line-height:25px;">Hello ${guestName}, thank you for confirming your RSVP for Ibukunoluwa and Olutayo's wedding weekend.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:34px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="border:1px solid #dec88c; background:#fbf6ec; padding:24px;" valign="top">
+                        <p style="margin:0 0 8px; color:#7a1f35; font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:bold;">Guest pass</p>
+                        <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:30px; line-height:35px; color:#0b513f;">${guestName}</p>
+                        <p style="margin:14px 0 0; font-size:14px; line-height:22px; color:#5f5a4e;">${escapeHtml(eventText)}<br/>${guestCount} guest${guestCount === 1 ? "" : "s"} on this RSVP</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:20px;">
+                    <tr>
+                      <td width="48%" style="background:#0b513f; padding:24px; border:1px solid #d7bd78;" valign="top">
+                        <p style="margin:0 0 12px; color:#e1c783; font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:bold;">Invitation code</p>
+                        <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; color:#fffaf0; font-size:44px; line-height:44px;">${invitationCode}</p>
+                        <p style="margin:16px 0 0; color:#d8ccb8; font-size:12px; line-height:18px;">Check-in reference<br/><strong style="color:#fffaf0;">${escapeHtml(checkInRef)}</strong></p>
+                      </td>
+                      <td width="4%" style="font-size:1px; line-height:1px;">&nbsp;</td>
+                      <td width="48%" align="center" style="background:#fffdf7; padding:18px; border:1px solid #dec88c;" valign="top">
+                        <img src="${qrSrc}" width="190" height="190" alt="Invitation QR code" style="display:block; width:190px; height:190px; border:0;" />
+                        <p style="margin:12px 0 0; color:#7a1f35; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:bold;">Scan at entry</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <div style="margin-top:22px; padding:18px 20px; border-left:4px solid #7a1f35; background:#f6eadb;">
+                    <p style="margin:0; color:#4f493e; font-size:14px; line-height:24px;">Please keep this email safe and present the QR code at the venue. The QR code is unique to your RSVP and invitation code.</p>
+                  </div>
+                  <p style="margin:26px 0 0; font-size:14px; line-height:24px; color:#5f5a4e;">Wedding website: <a href="https://thebensons26.vercel.app/" style="color:#7a1f35; font-weight:bold;">thebensons26.vercel.app</a></p>
+                  <p style="margin:8px 0 0; font-size:14px; line-height:24px; color:#5f5a4e;">Invitation card sample: <a href="${invitationCardUrl}" style="color:#7a1f35; font-weight:bold;">View invitation card</a></p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 34px; background:#143f34; color:#f8f1e6;">
+                  <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:22px; line-height:28px;">With love,<br/>Ibukunoluwa &amp; Olutayo</p>
+                  <p style="margin:12px 0 0; color:#d8ccb8; font-size:12px; line-height:18px;">4th &amp; 5th December 2026 · Ibadan, Nigeria</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
+}
+
+function buildQrAttachment(qrCodeDataUrl: string, invitationCode: string) {
+  const qrCodeBase64 = qrCodeDataUrl.split(",")[1];
+
+  if (!qrCodeBase64) {
+    return undefined;
+  }
+
+  return {
+    filename: `becoming-the-bensons-qr-${invitationCode}.png`,
+    content: qrCodeBase64,
+    contentType: "image/png",
+    contentId: "invitation-qr",
+  } satisfies EmailAttachment;
 }
 
 export async function sendInvitationEmail({
@@ -94,6 +189,7 @@ export async function sendInvitationEmail({
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://thebensons26.vercel.app";
   const invitationCardUrl = `${siteUrl}/images/wedding/invitation-card-sample.svg`;
+  const qrAttachment = buildQrAttachment(qrCodeDataUrl, guest.invitation_code);
 
   if (!to) {
     return {
@@ -112,12 +208,20 @@ export async function sendInvitationEmail({
     qrCodeDataUrl,
     invitationCardUrl,
   });
+  const resendHtml = buildInvitationEmailHtml({
+    guest,
+    rsvp,
+    qrCodeDataUrl,
+    qrImageSrc: qrAttachment ? "cid:invitation-qr" : undefined,
+    invitationCardUrl,
+  });
   const subject = `${couple.hashtag} Wedding Invitation`;
 
   const resendResult = await sendWithResend({
     to,
     subject,
-    html,
+    html: resendHtml,
+    attachments: qrAttachment ? [qrAttachment] : undefined,
   });
 
   if (resendResult) {
@@ -151,6 +255,7 @@ export async function sendInvitationEmail({
       subject,
       html,
       qrPayload,
+      qrCodeDataUrl,
       invitationCode: guest.invitation_code,
     }),
   });
@@ -180,10 +285,12 @@ async function sendWithResend({
   to,
   subject,
   html,
+  attachments,
 }: {
   to: string;
   subject: string;
   html: string;
+  attachments?: EmailAttachment[];
 }): Promise<SendProviderResult | null> {
   if (!process.env.RESEND_API_KEY || !process.env.INVITATION_EMAIL_FROM) {
     return null;
@@ -196,6 +303,7 @@ async function sendWithResend({
     to,
     subject,
     html,
+    attachments,
   });
 
   if (error) {
