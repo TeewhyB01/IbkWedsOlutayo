@@ -1,0 +1,18 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1600" fill="#FBF6EC"/>
+  <rect x="74" y="74" width="1052" height="1452" rx="56" fill="#0B3D31"/>
+  <rect x="112" y="112" width="976" height="1376" rx="38" stroke="#E3C98F" stroke-width="3"/>
+  <path d="M112 385C238 314 381 279 541 279C737 279 910 329 1088 431V112H112V385Z" fill="#7A1F35" opacity="0.92"/>
+  <circle cx="600" cy="494" r="86" fill="#FBF6EC" opacity="0.08"/>
+  <circle cx="600" cy="494" r="70" stroke="#E3C98F" stroke-width="2"/>
+  <text x="600" y="524" text-anchor="middle" fill="#FBF6EC" font-family="Georgia, 'Times New Roman', serif" font-size="78" font-weight="600">B</text>
+  <text x="600" y="650" text-anchor="middle" fill="#E3C98F" font-family="Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="8">#BECOMINGTHEBENSONS</text>
+  <text x="600" y="790" text-anchor="middle" fill="#FBF6EC" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="600">Ibukunoluwa</text>
+  <text x="600" y="890" text-anchor="middle" fill="#FBF6EC" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="400">&amp;</text>
+  <text x="600" y="1000" text-anchor="middle" fill="#FBF6EC" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="600">Olutayo</text>
+  <line x1="360" y1="1088" x2="840" y2="1088" stroke="#E3C98F" stroke-width="2"/>
+  <text x="600" y="1165" text-anchor="middle" fill="#FBF6EC" font-family="Arial, sans-serif" font-size="32" font-weight="700" letter-spacing="5">4TH &amp; 5TH DECEMBER 2026</text>
+  <text x="600" y="1242" text-anchor="middle" fill="#FBF6EC" font-family="Arial, sans-serif" font-size="30" opacity="0.76">Traditional Wedding &amp; Grand Finale</text>
+  <text x="600" y="1320" text-anchor="middle" fill="#E3C98F" font-family="Arial, sans-serif" font-size="28" letter-spacing="4">IBADAN, OYO STATE</text>
+  <text x="600" y="1430" text-anchor="middle" fill="#FBF6EC" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-style="italic">With love and gratitude</text>
+</svg>
