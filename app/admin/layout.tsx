@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { AdminSignOut } from "@/components/admin/AdminSignOut";
+import { DataPersistenceNotice } from "@/components/admin/DataPersistenceNotice";
 import { couple } from "@/content/siteContent";
 import { getCurrentAdminUser } from "@/lib/adminSession";
 
@@ -48,6 +49,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </div>
         </header>
       ) : null}
+      {user ? <DataPersistenceNotice /> : null}
       {children}
     </div>
   );

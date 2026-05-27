@@ -31,10 +31,7 @@ export const firebaseConfig: FirebaseWebConfig = {
 
 export function isFirebaseConfigured() {
   return Boolean(
-    firebaseConfig.apiKey &&
-      firebaseConfig.projectId &&
-      (hasFirebaseServiceAccount() ||
-        process.env.FIREBASE_USE_PUBLIC_REST === "true"),
+    firebaseConfig.apiKey && firebaseConfig.projectId && hasFirebaseServiceAccount(),
   );
 }
 
@@ -42,4 +39,8 @@ export function hasFirebaseServiceAccount() {
   return Boolean(
     process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY,
   );
+}
+
+export function isUsingTemporaryProductionStore() {
+  return Boolean(process.env.VERCEL && !isFirebaseConfigured());
 }

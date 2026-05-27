@@ -86,38 +86,123 @@ function drawCenteredText({
   });
 }
 
-function drawSaveTheDateTitle(page: PDFPage, fonts: FontSet, y: number) {
-  const saveText = "SAVE";
-  const dateText = "DATE";
-  const saveSize = 62;
-  const theSize = 40;
-  const saveWidth = fonts.serif.widthOfTextAtSize(saveText, saveSize);
-  const theWidth = fonts.serifItalic.widthOfTextAtSize("the", theSize);
-  const dateWidth = fonts.serif.widthOfTextAtSize(dateText, saveSize);
-  const gap = 18;
-  const groupWidth = saveWidth + theWidth + dateWidth + gap * 2;
-  const startX = (page.getWidth() - groupWidth) / 2;
+function drawLetterSpacedText({
+  page,
+  text,
+  x,
+  y,
+  size,
+  font,
+  color,
+  spacing = 2.4,
+  opacity = 1,
+}: {
+  page: PDFPage;
+  text: string;
+  x: number;
+  y: number;
+  size: number;
+  font: PDFFont;
+  color: ReturnType<typeof rgb>;
+  spacing?: number;
+  opacity?: number;
+}) {
+  let cursor = x;
 
-  page.drawText(saveText, {
-    x: startX,
+  for (const character of text) {
+    page.drawText(character, {
+      x: cursor,
+      y,
+      size,
+      font,
+      color,
+      opacity,
+    });
+    cursor += font.widthOfTextAtSize(character, size) + spacing;
+  }
+}
+
+function letterSpacedWidth(text: string, font: PDFFont, size: number, spacing = 2.4) {
+  return (
+    text
+      .split("")
+      .reduce((width, character) => width + font.widthOfTextAtSize(character, size), 0) +
+    Math.max(text.length - 1, 0) * spacing
+  );
+}
+
+function drawCenteredLetterSpacedText({
+  page,
+  text,
+  y,
+  size,
+  font,
+  color,
+  spacing = 2.4,
+  opacity = 1,
+}: {
+  page: PDFPage;
+  text: string;
+  y: number;
+  size: number;
+  font: PDFFont;
+  color: ReturnType<typeof rgb>;
+  spacing?: number;
+  opacity?: number;
+}) {
+  drawLetterSpacedText({
+    page,
+    text,
+    x: (page.getWidth() - letterSpacedWidth(text, font, size, spacing)) / 2,
     y,
-    size: saveSize,
-    font: fonts.serif,
-    color: ivory,
+    size,
+    font,
+    color,
+    spacing,
+    opacity,
   });
-  page.drawText("the", {
-    x: startX + saveWidth + gap,
-    y: y + 7,
-    size: theSize,
-    font: fonts.serifItalic,
-    color: ivory,
+}
+
+function drawInsetFrame(page: PDFPage, inset: number, opacity = 0.92) {
+  const { width, height } = page.getSize();
+
+  page.drawRectangle({
+    x: inset,
+    y: inset,
+    width: width - inset * 2,
+    height: height - inset * 2,
+    borderColor: champagne,
+    borderWidth: 0.75,
+    opacity,
   });
-  page.drawText(dateText, {
-    x: startX + saveWidth + theWidth + gap * 2,
+  page.drawRectangle({
+    x: inset + 9,
+    y: inset + 9,
+    width: width - (inset + 9) * 2,
+    height: height - (inset + 9) * 2,
+    borderColor: ivory,
+    borderWidth: 0.25,
+    opacity: 0.45,
+  });
+}
+
+function drawMonogram(page: PDFPage, fonts: FontSet, x: number, y: number) {
+  page.drawRectangle({
+    x,
     y,
-    size: saveSize,
-    font: fonts.serif,
+    width: 54,
+    height: 54,
     color: ivory,
+    borderColor: champagne,
+    borderWidth: 0.75,
+    opacity: 0.94,
+  });
+  page.drawText("B", {
+    x: x + 18.5,
+    y: y + 13,
+    size: 29,
+    font: fonts.serifBold,
+    color: emerald,
   });
 }
 
@@ -189,39 +274,62 @@ function drawPhotoBackground(page: PDFPage, image: PDFImage) {
   );
 }
 
-function drawDetailRow({
+function drawEventBlock({
   page,
   fonts,
-  label,
-  value,
+  x,
   y,
+  width = 408,
+  label,
+  title,
+  date,
 }: {
   page: PDFPage;
   fonts: FontSet;
-  label: string;
-  value: string;
+  x: number;
   y: number;
+  width?: number;
+  label: string;
+  title: string;
+  date: string;
 }) {
-  page.drawText(label, {
-    x: 66,
+  page.drawRectangle({
+    x,
     y,
+    width,
+    height: 92,
+    color: ivory,
+    borderColor: champagne,
+    borderWidth: 0.6,
+  });
+  page.drawRectangle({
+    x,
+    y,
+    width: 7,
+    height: 92,
+    color: label.includes("01") ? burgundy : emerald,
+  });
+  page.drawText(label, {
+    x: x + 24,
+    y: y + 62,
     size: 8,
     font: fonts.sansBold,
     color: burgundy,
   });
-  page.drawText(value, {
-    x: 66,
-    y: y - 26,
-    size: 20,
+  page.drawText(title, {
+    x: x + 24,
+    y: y + 32,
+    size: title.length > 18 ? 22 : 24,
     font: fonts.serifBold,
     color: emerald,
   });
-  page.drawLine({
-    start: { x: 66, y: y - 43 },
-    end: { x: 474, y: y - 43 },
-    thickness: 0.45,
-    color: champagne,
-    opacity: 0.65,
+  page.drawText(date, {
+    x: x + 24,
+    y: y + 15,
+    size: 10,
+    font: fonts.sansBold,
+    color: ink,
+    opacity: 0.72,
   });
 }
 
@@ -243,63 +351,106 @@ function drawCoverPage({
     width,
     height,
     color: deepEmerald,
-    opacity: 0.44,
-  });
-  page.drawRectangle({
-    x: 0,
-    y: height * 0.57,
-    width,
-    height: height * 0.43,
-    color: deepEmerald,
-    opacity: 0.26,
+    opacity: 0.22,
   });
   page.drawRectangle({
     x: 0,
     y: 0,
     width,
-    height: height * 0.34,
-    color: burgundy,
-    opacity: 0.24,
+    height,
+    color: deepEmerald,
+    opacity: 0.18,
   });
+  page.drawRectangle({
+    x: 0,
+    y: 0,
+    width,
+    height: 334,
+    color: burgundy,
+    opacity: 0.44,
+  });
+  page.drawRectangle({
+    x: 0,
+    y: 334,
+    width,
+    height: 190,
+    color: deepEmerald,
+    opacity: 0.3,
+  });
+  drawInsetFrame(page, 30);
+  drawMonogram(page, fonts, width / 2 - 27, 818);
 
-  drawCenteredText({
+  drawCenteredLetterSpacedText({
     page,
     text: couple.hashtag.toUpperCase(),
     font: fonts.sansBold,
     size: 9,
-    y: 800,
+    y: 785,
     color: champagne,
+    spacing: 1.8,
     opacity: 0.98,
   });
-  drawSaveTheDateTitle(page, fonts, 736);
+
   drawCenteredText({
     page,
-    text: "IBUKUNOLUWA & OLUTAYO",
+    text: "Save",
+    font: fonts.serifItalic,
+    size: 76,
+    y: 706,
+    color: ivory,
+  });
+  drawCenteredText({
+    page,
+    text: "THE DATE",
     font: fonts.serifBold,
-    size: 25,
-    y: 692,
+    size: 50,
+    y: 654,
+    color: ivory,
   });
   page.drawLine({
-    start: { x: 156, y: 666 },
-    end: { x: 384, y: 666 },
+    start: { x: 154, y: 629 },
+    end: { x: 386, y: 629 },
     thickness: 0.65,
     color: champagne,
     opacity: 0.9,
   });
   drawCenteredText({
     page,
-    text: "IBADAN, NIGERIA",
+    text: "IBUKUNOLUWA & OLUTAYO",
+    font: fonts.serifBold,
+    size: 24,
+    y: 598,
+    color: ivory,
+  });
+  drawCenteredText({
+    page,
+    text: "TWO FAMILIES. ONE BEAUTIFUL BEGINNING.",
     font: fonts.sansBold,
-    size: 10,
-    y: 642,
+    size: 8.5,
+    y: 577,
     color: champagne,
   });
   drawCenteredText({
     page,
-    text: "04.12.26   &   05.12.26",
-    font: fonts.serif,
-    size: 39,
+    text: "4TH & 5TH DECEMBER 2026",
+    font: fonts.serifBold,
+    size: 31,
+    y: 140,
+    color: ivory,
+  });
+  page.drawLine({
+    start: { x: 184, y: 119 },
+    end: { x: 356, y: 119 },
+    thickness: 0.55,
+    color: champagne,
+  });
+  drawCenteredText({
+    page,
+    text: "IBADAN, NIGERIA",
+    font: fonts.sansBold,
+    size: 9.5,
     y: 96,
+    color: champagne,
   });
 }
 
@@ -321,45 +472,63 @@ function drawDetailsPage({
   const { width, height } = page.getSize();
 
   page.drawRectangle({ x: 0, y: 0, width, height, color: ivory });
-  page.drawRectangle({ x: 0, y: height - 338, width, height: 338, color: emerald });
+  page.drawRectangle({ x: 0, y: 0, width: 54, height, color: emerald });
+  page.drawRectangle({ x: width - 54, y: 0, width: 54, height, color: burgundy });
+  page.drawRectangle({
+    x: 54,
+    y: 0,
+    width: width - 108,
+    height,
+    borderColor: champagne,
+    borderWidth: 0.55,
+    opacity: 0.85,
+  });
+  page.drawRectangle({ x: 54, y: height - 304, width: width - 108, height: 304, color: emerald });
   const heroCover = coverImage({
     imageWidth: heroImage.width,
     imageHeight: heroImage.height,
-    pageWidth: width,
-    pageHeight: 338,
+    pageWidth: width - 108,
+    pageHeight: 304,
   });
-  page.drawImage(
-    heroImage,
-    {
-      ...heroCover,
-      y: height - 338 + heroCover.y,
-    },
-  );
+  page.drawImage(heroImage, {
+    ...heroCover,
+    x: 54 + heroCover.x,
+    y: height - 304 + heroCover.y,
+  });
   page.drawRectangle({
-    x: 0,
-    y: height - 338,
-    width,
-    height: 338,
+    x: 54,
+    y: height - 304,
+    width: width - 108,
+    height: 304,
     color: deepEmerald,
-    opacity: 0.44,
+    opacity: 0.34,
   });
+  page.drawRectangle({
+    x: 54,
+    y: height - 304,
+    width: width - 108,
+    height: 94,
+    color: burgundy,
+    opacity: 0.34,
+  });
+  drawMonogram(page, fonts, 74, 850);
   page.drawText(couple.hashtag.toUpperCase(), {
-    x: 44,
-    y: 872,
+    x: 144,
+    y: 880,
     size: 9,
     font: fonts.sansBold,
     color: champagne,
   });
   page.drawText("You are invited", {
-    x: 44,
-    y: 807,
-    size: 45,
-    font: fonts.serif,
+    x: 74,
+    y: 748,
+    size: 46,
+    font: fonts.serifBold,
     color: ivory,
   });
-  page.drawText("to save the date for our wedding weekend", {
-    x: 47,
-    y: 777,
+  page.drawText("to celebrate a weekend of family, faith, culture, and forever", {
+    x: 76,
+    y: 724,
     size: 12,
     font: fonts.sans,
     color: ivory,
@@ -367,119 +536,159 @@ function drawDetailsPage({
   });
 
   page.drawRectangle({
-    x: 40,
-    y: 58,
-    width: 460,
-    height: 538,
-    color: rgb(1, 0.985, 0.94),
+    x: 74,
+    y: 92,
+    width: 392,
+    height: 528,
+    color: rgb(1, 0.985, 0.945),
     borderColor: champagne,
     borderWidth: 0.65,
   });
+  page.drawRectangle({
+    x: 92,
+    y: 110,
+    width: 356,
+    height: 492,
+    borderColor: champagne,
+    borderWidth: 0.35,
+    opacity: 0.7,
+  });
   page.drawText("IBUKUNOLUWA & OLUTAYO", {
-    x: 66,
-    y: 548,
-    size: 13,
+    x: 112,
+    y: 560,
+    size: 10,
     font: fonts.sansBold,
     color: burgundy,
   });
   page.drawText("Wedding Weekend", {
-    x: 66,
-    y: 510,
-    size: 39,
+    x: 112,
+    y: 525,
+    size: 34,
     font: fonts.serifBold,
     color: emerald,
   });
-  page.drawText("Please use the details below to RSVP online.", {
-    x: 68,
-    y: 482,
-    size: 11,
+  page.drawText("Kindly save these dates. A formal invitation and venue details will follow.", {
+    x: 114,
+    y: 500,
+    size: 9.5,
     font: fonts.sans,
     color: ink,
     opacity: 0.72,
   });
 
-  drawDetailRow({
+  drawEventBlock({
     page,
     fonts,
-    label: "TRADITIONAL WEDDING",
-    value: "Friday, 4th December 2026",
-    y: 432,
+    x: 110,
+    y: 384,
+    width: 320,
+    label: "CELEBRATION 01",
+    title: "Traditional Wedding",
+    date: "Friday, 4th December 2026",
   });
-  drawDetailRow({
+  drawEventBlock({
     page,
     fonts,
-    label: "THE GRAND FINALE",
-    value: "Saturday, 5th December 2026",
-    y: 348,
+    x: 110,
+    y: 278,
+    width: 320,
+    label: "CELEBRATION 02",
+    title: "The Grand Finale",
+    date: "Saturday, 5th December 2026 / Ibadan, Nigeria",
   });
-  drawDetailRow({
-    page,
-    fonts,
-    label: "LOCATION",
-    value: "Ibadan, Nigeria",
-    y: 264,
+
+  page.drawText("RESERVED FOR", {
+    x: 112,
+    y: 248,
+    size: 7.5,
+    font: fonts.sansBold,
+    color: burgundy,
+  });
+  page.drawText(guest.guest_name, {
+    x: 112,
+    y: 229,
+    size: Math.min(15, Math.max(10, 240 / Math.max(guest.guest_name.length, 1))),
+    font: fonts.serifBold,
+    color: emerald,
   });
 
   page.drawRectangle({
-    x: 64,
-    y: 114,
-    width: 190,
-    height: 96,
+    x: 112,
+    y: 132,
+    width: 158,
+    height: 84,
     color: emerald,
     borderColor: champagne,
     borderWidth: 0.7,
   });
   page.drawText("INVITATION CODE", {
-    x: 83,
-    y: 180,
+    x: 132,
+    y: 187,
     size: 8,
     font: fonts.sansBold,
     color: champagne,
   });
   page.drawText(guest.invitation_code, {
-    x: 96,
-    y: 136,
-    size: 34,
+    x: 143,
+    y: 149,
+    size: 31,
     font: fonts.serifBold,
     color: ivory,
   });
+  page.drawText("Use this code to RSVP online.", {
+    x: 116,
+    y: 98,
+    size: 9.5,
+    font: fonts.sans,
+    color: ink,
+    opacity: 0.72,
+  });
 
-  page.drawImage(qrImage, {
-    x: 316,
-    y: 112,
+  page.drawRectangle({
+    x: 304,
+    y: 118,
     width: 118,
     height: 118,
+    color: ivory,
+    borderColor: champagne,
+    borderWidth: 0.65,
+  });
+  page.drawImage(qrImage, {
+    x: 312,
+    y: 126,
+    width: 102,
+    height: 102,
   });
   addLinkAnnotation({
     pdf,
     page,
     url: weddingWebsiteUrl,
-    x: 316,
-    y: 112,
+    x: 304,
+    y: 118,
     width: 118,
     height: 118,
   });
   page.drawText("SCAN TO RSVP", {
-    x: 324,
-    y: 91,
+    x: 323,
+    y: 100,
     size: 8,
     font: fonts.sansBold,
     color: burgundy,
   });
 
   const linkText = "thebensons26.vercel.app";
-  const linkX = 66;
-  const linkY = 76;
+  const linkX = (width - fonts.sansBold.widthOfTextAtSize(linkText, 11)) / 2;
+  const linkY = 68;
   page.drawText(linkText, {
     x: linkX,
     y: linkY,
-    size: 13,
+    size: 11,
     font: fonts.sansBold,
     color: burgundy,
   });
   page.drawLine({
     start: { x: linkX, y: linkY - 3 },
-    end: { x: linkX + fonts.sansBold.widthOfTextAtSize(linkText, 13), y: linkY - 3 },
+    end: { x: linkX + fonts.sansBold.widthOfTextAtSize(linkText, 11), y: linkY - 3 },
     thickness: 0.55,
     color: burgundy,
   });
@@ -489,7 +698,7 @@ function drawDetailsPage({
     url: weddingWebsiteUrl,
     x: linkX,
     y: linkY - 4,
-    width: fonts.sansBold.widthOfTextAtSize(linkText, 13),
+    width: fonts.sansBold.widthOfTextAtSize(linkText, 11),
     height: 18,
   });
 }
@@ -503,8 +712,8 @@ export async function createSaveTheDatePdf(guest: GuestRecord) {
     sans: await pdf.embedFont(StandardFonts.Helvetica),
     sansBold: await pdf.embedFont(StandardFonts.HelveticaBold),
   };
-  const cover = await embedJpgFromPublic(pdf, "story-feature.jpg");
-  const detailsHero = await embedJpgFromPublic(pdf, "home-banner-2.jpg");
+  const cover = await embedJpgFromPublic(pdf, "events-grand-finale.jpg");
+  const detailsHero = await embedJpgFromPublic(pdf, "our-story-hero.jpg");
   const qrImage = await embedWebsiteQr(pdf);
   const coverPage = pdf.addPage(pageSize);
   const detailsPage = pdf.addPage(pageSize);
