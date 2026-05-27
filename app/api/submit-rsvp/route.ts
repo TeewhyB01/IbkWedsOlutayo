@@ -119,6 +119,8 @@ export async function POST(request: Request) {
       );
     }
 
+    console.error("RSVP submission failed", error);
+
     return NextResponse.json(
       {
         success: false,

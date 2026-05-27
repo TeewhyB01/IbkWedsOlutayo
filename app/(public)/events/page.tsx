@@ -24,7 +24,7 @@ export default function EventsPage() {
     <>
       <PageHeader
         title="Wedding Events"
-        subtitle="Two beautiful celebrations: a traditional marriage honouring culture and a grand finale filled with worship, joy, and unforgettable style."
+        subtitle="Two beautiful celebrations: a traditional wedding honouring culture and a grand finale filled with worship, joy, and unforgettable style."
         image={weddingImages.eventsHero}
       >
         <div className="flex flex-wrap gap-3">

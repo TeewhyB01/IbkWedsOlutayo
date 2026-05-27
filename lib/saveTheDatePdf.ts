@@ -401,7 +401,7 @@ function drawDetailsPage({
   drawDetailRow({
     page,
     fonts,
-    label: "TRADITIONAL MARRIAGE",
+    label: "TRADITIONAL WEDDING",
     value: "Friday, 4th December 2026",
     y: 432,
   });

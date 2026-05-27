@@ -91,7 +91,8 @@ export async function sendInvitationEmail({
   const qrPayload = buildQrPayload({ guest, rsvp });
   const qrCodeDataUrl = await createInvitationQrCode(qrPayload);
   const to = rsvp?.email ?? guest.email;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://thebensons26.vercel.app";
   const invitationCardUrl = `${siteUrl}/images/wedding/invitation-card-sample.svg`;
 
   if (!to) {

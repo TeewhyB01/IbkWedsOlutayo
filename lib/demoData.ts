@@ -4,15 +4,17 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 import type { GuestRecord, RSVPRecord } from "@/types";
 
 const generatedGuestCount = 300;
+const demoStoreDirectory = process.env.VERCEL
+  ? tmpdir()
+  : path.join(process.cwd(), ".next", "cache");
 const demoStorePath = path.join(
-  process.cwd(),
-  ".next",
-  "cache",
+  demoStoreDirectory,
   "becoming-bensons-demo-store.json",
 );
 

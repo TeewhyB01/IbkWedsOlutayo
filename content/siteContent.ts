@@ -38,7 +38,7 @@ export const homeContent = {
     },
     {
       title: "Honouring Heritage",
-      text: "Our traditional marriage will be a beautiful tribute to the families and culture that shaped us.",
+      text: "Our traditional wedding will be a beautiful tribute to the families and culture that shaped us.",
       image: "/images/wedding/home-banner-2.jpg",
     },
     {
@@ -66,5 +66,5 @@ export const weddingPalette = {
 export const seo = {
   title: "Ibukunoluwa & Olutayo Wedding",
   description:
-    "Join Ibukunoluwa and Olutayo as they celebrate their traditional marriage and grand finale on 4th and 5th December 2026.",
+    "Join Ibukunoluwa and Olutayo as they celebrate their traditional wedding and grand finale on 4th and 5th December 2026.",
 };

@@ -17,18 +17,18 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://thebensons26.vercel.app",
   ),
   title: {
     default: "Ibukunoluwa & Olutayo Wedding",
     template: "%s | Ibukunoluwa & Olutayo Wedding",
   },
   description:
-    "Join Ibukunoluwa and Olutayo as they celebrate their traditional marriage and grand finale on 4th and 5th December 2026.",
+    "Join Ibukunoluwa and Olutayo as they celebrate their traditional wedding and grand finale on 4th and 5th December 2026.",
   openGraph: {
     title: "Ibukunoluwa & Olutayo Wedding",
     description:
-      "Join Ibukunoluwa and Olutayo as they celebrate their traditional marriage and grand finale on 4th and 5th December 2026.",
+      "Join Ibukunoluwa and Olutayo as they celebrate their traditional wedding and grand finale on 4th and 5th December 2026.",
     images: ["/images/wedding/og-image.jpg"],
     type: "website",
   },

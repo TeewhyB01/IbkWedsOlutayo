@@ -12,7 +12,7 @@ export const weddingEvents: WeddingEvent[] = [
     address: "To be announced",
     dressCode: "Traditional / Cultural Elegance",
     description:
-      "Join us as we honour our families, culture, and heritage in a beautiful traditional marriage celebration.",
+      "Join us as we honour our families, culture, and heritage in a beautiful traditional wedding celebration.",
     image: "/images/wedding/gallery-3.jpg",
     theme: "Family honour, culture, music, colour, and the joy of two lineages becoming one.",
     guestNote:
