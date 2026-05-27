@@ -422,15 +422,26 @@ export async function seedFirebaseGuestsIfEmpty() {
 
   const guests = createGeneratedGuests();
 
-  await commitWrites(
-    guests.map((guest) => ({
-      update: {
-        name: documentName("guests", guest.id),
-        fields: encodeFields(guest as unknown as Record<string, unknown>),
-      },
-      currentDocument: { exists: false },
-    })),
-  );
+  try {
+    await commitWrites(
+      guests.map((guest) => ({
+        update: {
+          name: documentName("guests", guest.id),
+          fields: encodeFields(guest as unknown as Record<string, unknown>),
+        },
+        currentDocument: { exists: false },
+      })),
+    );
+  } catch (error) {
+    if (
+      error instanceof FirebaseStoreError &&
+      (error.status === 409 || error.code === "ALREADY_EXISTS")
+    ) {
+      return false;
+    }
+
+    throw error;
+  }
 
   return true;
 }
