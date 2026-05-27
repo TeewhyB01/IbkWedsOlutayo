@@ -206,6 +206,22 @@ function drawMonogram(page: PDFPage, fonts: FontSet, x: number, y: number) {
   });
 }
 
+function fittedTextSize(
+  text: string,
+  font: PDFFont,
+  maxWidth: number,
+  preferredSize: number,
+  minSize: number,
+) {
+  let size = preferredSize;
+
+  while (font.widthOfTextAtSize(text, size) > maxWidth && size > minSize) {
+    size -= 0.5;
+  }
+
+  return size;
+}
+
 function addLinkAnnotation({
   pdf,
   page,
@@ -274,13 +290,15 @@ function drawPhotoBackground(page: PDFPage, image: PDFImage) {
   );
 }
 
-function drawEventBlock({
+function drawInvitationEventRow({
   page,
   fonts,
   x,
   y,
-  width = 408,
-  label,
+  accent,
+  day,
+  month,
+  weekday,
   title,
   date,
 }: {
@@ -288,45 +306,64 @@ function drawEventBlock({
   fonts: FontSet;
   x: number;
   y: number;
-  width?: number;
-  label: string;
+  accent: ReturnType<typeof rgb>;
+  day: string;
+  month: string;
+  weekday: string;
   title: string;
   date: string;
 }) {
+  const width = 372;
+
   page.drawRectangle({
     x,
     y,
     width,
-    height: 92,
-    color: ivory,
+    height: 78,
+    color: rgb(0.996, 0.988, 0.958),
     borderColor: champagne,
-    borderWidth: 0.6,
+    borderWidth: 0.45,
   });
   page.drawRectangle({
-    x,
-    y,
-    width: 7,
-    height: 92,
-    color: label.includes("01") ? burgundy : emerald,
+    x: x + 16,
+    y: y + 14,
+    width: 52,
+    height: 50,
+    color: accent,
+    opacity: 0.96,
   });
-  page.drawText(label, {
-    x: x + 24,
-    y: y + 62,
+  page.drawText(day, {
+    x: x + 28,
+    y: y + 35,
+    size: 19,
+    font: fonts.serifBold,
+    color: ivory,
+  });
+  page.drawText(month, {
+    x: x + 28,
+    y: y + 22,
+    size: 7.5,
+    font: fonts.sansBold,
+    color: champagne,
+  });
+  page.drawText(weekday.toUpperCase(), {
+    x: x + 88,
+    y: y + 52,
     size: 8,
     font: fonts.sansBold,
-    color: burgundy,
+    color: accent,
   });
   page.drawText(title, {
-    x: x + 24,
-    y: y + 32,
-    size: title.length > 18 ? 22 : 24,
+    x: x + 88,
+    y: y + 28,
+    size: 22,
     font: fonts.serifBold,
     color: emerald,
   });
   page.drawText(date, {
-    x: x + 24,
-    y: y + 15,
-    size: 10,
+    x: x + 88,
+    y: y + 13,
+    size: 8.8,
     font: fonts.sansBold,
     color: ink,
     opacity: 0.72,
@@ -351,7 +388,7 @@ function drawCoverPage({
     width,
     height,
     color: deepEmerald,
-    opacity: 0.22,
+    opacity: 0.26,
   });
   page.drawRectangle({
     x: 0,
@@ -359,23 +396,7 @@ function drawCoverPage({
     width,
     height,
     color: deepEmerald,
-    opacity: 0.18,
-  });
-  page.drawRectangle({
-    x: 0,
-    y: 0,
-    width,
-    height: 334,
-    color: burgundy,
-    opacity: 0.44,
-  });
-  page.drawRectangle({
-    x: 0,
-    y: 334,
-    width,
-    height: 190,
-    color: deepEmerald,
-    opacity: 0.3,
+    opacity: 0.12,
   });
   drawInsetFrame(page, 30);
   drawMonogram(page, fonts, width / 2 - 27, 818);
@@ -470,65 +491,77 @@ function drawDetailsPage({
   guest: GuestRecord;
 }) {
   const { width, height } = page.getSize();
+  const cardX = 48;
+  const cardY = 68;
+  const cardWidth = 444;
+  const cardHeight = 542;
+  const innerX = 72;
+  const innerWidth = 396;
 
   page.drawRectangle({ x: 0, y: 0, width, height, color: ivory });
-  page.drawRectangle({ x: 0, y: 0, width: 54, height, color: emerald });
-  page.drawRectangle({ x: width - 54, y: 0, width: 54, height, color: burgundy });
+  page.drawRectangle({ x: 0, y: 0, width: 22, height, color: emerald });
+  page.drawRectangle({ x: width - 22, y: 0, width: 22, height, color: burgundy });
   page.drawRectangle({
-    x: 54,
+    x: 22,
     y: 0,
-    width: width - 108,
+    width: width - 44,
     height,
     borderColor: champagne,
-    borderWidth: 0.55,
-    opacity: 0.85,
+    borderWidth: 0.35,
+    opacity: 0.55,
   });
-  page.drawRectangle({ x: 54, y: height - 304, width: width - 108, height: 304, color: emerald });
+  page.drawRectangle({
+    x: 0,
+    y: height - 330,
+    width,
+    height: 330,
+    color: emerald,
+  });
   const heroCover = coverImage({
     imageWidth: heroImage.width,
     imageHeight: heroImage.height,
-    pageWidth: width - 108,
-    pageHeight: 304,
+    pageWidth: width,
+    pageHeight: 330,
   });
   page.drawImage(heroImage, {
     ...heroCover,
-    x: 54 + heroCover.x,
-    y: height - 304 + heroCover.y,
+    x: heroCover.x,
+    y: height - 330 + heroCover.y,
   });
   page.drawRectangle({
-    x: 54,
-    y: height - 304,
-    width: width - 108,
-    height: 304,
+    x: 0,
+    y: height - 330,
+    width,
+    height: 330,
     color: deepEmerald,
-    opacity: 0.34,
+    opacity: 0.42,
   });
   page.drawRectangle({
-    x: 54,
-    y: height - 304,
-    width: width - 108,
-    height: 94,
-    color: burgundy,
-    opacity: 0.34,
+    x: 0,
+    y: height - 128,
+    width,
+    height: 128,
+    color: deepEmerald,
+    opacity: 0.24,
   });
-  drawMonogram(page, fonts, 74, 850);
+  drawMonogram(page, fonts, 46, 848);
   page.drawText(couple.hashtag.toUpperCase(), {
-    x: 144,
+    x: 118,
     y: 880,
     size: 9,
     font: fonts.sansBold,
     color: champagne,
   });
   page.drawText("You are invited", {
-    x: 74,
-    y: 748,
+    x: 50,
+    y: 756,
     size: 46,
     font: fonts.serifBold,
     color: ivory,
   });
   page.drawText("to celebrate a weekend of family, faith, culture, and forever", {
-    x: 76,
-    y: 724,
+    x: 52,
+    y: 730,
     size: 12,
     font: fonts.sans,
     color: ivory,
@@ -536,108 +569,138 @@ function drawDetailsPage({
   });
 
   page.drawRectangle({
-    x: 74,
-    y: 92,
-    width: 392,
-    height: 528,
+    x: cardX,
+    y: cardY,
+    width: cardWidth,
+    height: cardHeight,
     color: rgb(1, 0.985, 0.945),
     borderColor: champagne,
     borderWidth: 0.65,
   });
   page.drawRectangle({
-    x: 92,
-    y: 110,
-    width: 356,
-    height: 492,
+    x: cardX + 14,
+    y: cardY + 14,
+    width: cardWidth - 28,
+    height: cardHeight - 28,
     borderColor: champagne,
-    borderWidth: 0.35,
-    opacity: 0.7,
+    borderWidth: 0.3,
+    opacity: 0.58,
   });
-  page.drawText("IBUKUNOLUWA & OLUTAYO", {
-    x: 112,
-    y: 560,
-    size: 10,
+
+  drawCenteredLetterSpacedText({
+    page,
+    text: "SAVE THE DATE",
+    y: 566,
+    size: 8.2,
     font: fonts.sansBold,
     color: burgundy,
+    spacing: 1.65,
   });
-  page.drawText("Wedding Weekend", {
-    x: 112,
-    y: 525,
-    size: 34,
+  drawCenteredText({
+    page,
+    text: "Ibukunoluwa & Olutayo",
+    y: 526,
+    size: 31,
     font: fonts.serifBold,
     color: emerald,
   });
-  page.drawText("Kindly save these dates. A formal invitation and venue details will follow.", {
-    x: 114,
-    y: 500,
-    size: 9.5,
+  drawCenteredText({
+    page,
+    text: "Wedding Weekend / Ibadan, Nigeria",
+    y: 504,
+    size: 10.2,
     font: fonts.sans,
     color: ink,
     opacity: 0.72,
   });
-
-  drawEventBlock({
-    page,
-    fonts,
-    x: 110,
-    y: 384,
-    width: 320,
-    label: "CELEBRATION 01",
-    title: "Traditional Wedding",
-    date: "Friday, 4th December 2026",
+  page.drawLine({
+    start: { x: 132, y: 486 },
+    end: { x: 408, y: 486 },
+    thickness: 0.45,
+    color: champagne,
+    opacity: 0.8,
   });
-  drawEventBlock({
+
+  drawInvitationEventRow({
     page,
     fonts,
-    x: 110,
-    y: 278,
-    width: 320,
-    label: "CELEBRATION 02",
+    x: innerX,
+    y: 394,
+    accent: burgundy,
+    day: "04",
+    month: "DEC",
+    weekday: "Friday",
+    title: "Traditional Wedding",
+    date: "4th December 2026",
+  });
+  drawInvitationEventRow({
+    page,
+    fonts,
+    x: innerX,
+    y: 300,
+    accent: emerald,
+    day: "05",
+    month: "DEC",
+    weekday: "Saturday",
     title: "The Grand Finale",
-    date: "Saturday, 5th December 2026 / Ibadan, Nigeria",
+    date: "5th December 2026 / Ibadan, Nigeria",
   });
 
   page.drawText("RESERVED FOR", {
-    x: 112,
-    y: 248,
+    x: innerX,
+    y: 264,
     size: 7.5,
     font: fonts.sansBold,
     color: burgundy,
   });
+  const guestNameSize = fittedTextSize(
+    guest.guest_name,
+    fonts.serifBold,
+    innerWidth,
+    17,
+    10,
+  );
   page.drawText(guest.guest_name, {
-    x: 112,
-    y: 229,
-    size: Math.min(15, Math.max(10, 240 / Math.max(guest.guest_name.length, 1))),
+    x: innerX,
+    y: 242,
+    size: guestNameSize,
     font: fonts.serifBold,
     color: emerald,
   });
+  page.drawLine({
+    start: { x: innerX, y: 228 },
+    end: { x: innerX + innerWidth, y: 228 },
+    thickness: 0.35,
+    color: champagne,
+    opacity: 0.62,
+  });
 
   page.drawRectangle({
-    x: 112,
-    y: 132,
-    width: 158,
-    height: 84,
+    x: innerX,
+    y: 122,
+    width: 174,
+    height: 88,
     color: emerald,
     borderColor: champagne,
     borderWidth: 0.7,
   });
   page.drawText("INVITATION CODE", {
-    x: 132,
-    y: 187,
+    x: innerX + 25,
+    y: 178,
     size: 8,
     font: fonts.sansBold,
     color: champagne,
   });
   page.drawText(guest.invitation_code, {
-    x: 143,
-    y: 149,
-    size: 31,
+    x: innerX + 44,
+    y: 139,
+    size: 34,
     font: fonts.serifBold,
     color: ivory,
   });
   page.drawText("Use this code to RSVP online.", {
-    x: 116,
-    y: 98,
+    x: innerX,
+    y: 100,
     size: 9.5,
     font: fonts.sans,
     color: ink,
@@ -645,31 +708,31 @@ function drawDetailsPage({
   });
 
   page.drawRectangle({
-    x: 304,
-    y: 118,
-    width: 118,
-    height: 118,
+    x: 334,
+    y: 117,
+    width: 112,
+    height: 112,
     color: ivory,
     borderColor: champagne,
     borderWidth: 0.65,
   });
   page.drawImage(qrImage, {
-    x: 312,
-    y: 126,
-    width: 102,
-    height: 102,
+    x: 342,
+    y: 125,
+    width: 96,
+    height: 96,
   });
   addLinkAnnotation({
     pdf,
     page,
     url: weddingWebsiteUrl,
-    x: 304,
-    y: 118,
-    width: 118,
-    height: 118,
+    x: 334,
+    y: 117,
+    width: 112,
+    height: 112,
   });
   page.drawText("SCAN TO RSVP", {
-    x: 323,
+    x: 353,
     y: 100,
     size: 8,
     font: fonts.sansBold,
@@ -678,7 +741,7 @@ function drawDetailsPage({
 
   const linkText = "thebensons26.vercel.app";
   const linkX = (width - fonts.sansBold.widthOfTextAtSize(linkText, 11)) / 2;
-  const linkY = 68;
+  const linkY = 82;
   page.drawText(linkText, {
     x: linkX,
     y: linkY,
