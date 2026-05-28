@@ -10,6 +10,7 @@ export function RSVPTable({ rsvps }: { rsvps: RSVPRecord[] }) {
               <th className="px-4 py-4">Guest</th>
               <th className="px-4 py-4">Code</th>
               <th className="px-4 py-4">Contact</th>
+              <th className="px-4 py-4">Category</th>
               <th className="px-4 py-4">Traditional</th>
               <th className="px-4 py-4">Finale</th>
               <th className="px-4 py-4">Count</th>
@@ -20,7 +21,7 @@ export function RSVPTable({ rsvps }: { rsvps: RSVPRecord[] }) {
           <tbody className="divide-y divide-gold/14">
             {rsvps.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-muted">
+                <td colSpan={9} className="px-4 py-10 text-center text-muted">
                   No RSVP responses match this filter yet.
                 </td>
               </tr>
@@ -38,6 +39,7 @@ export function RSVPTable({ rsvps }: { rsvps: RSVPRecord[] }) {
                     <p>{rsvp.email ?? "No email"}</p>
                     <p>{rsvp.phone ?? "No phone"}</p>
                   </td>
+                  <td className="px-4 py-4 text-muted">{formatRsvpCategory(rsvp)}</td>
                   <td className="px-4 py-4">{rsvp.attending_traditional ? "Yes" : "No"}</td>
                   <td className="px-4 py-4">{rsvp.attending_finale ? "Yes" : "No"}</td>
                   <td className="px-4 py-4">{rsvp.guest_count}</td>
@@ -51,4 +53,16 @@ export function RSVPTable({ rsvps }: { rsvps: RSVPRecord[] }) {
       </div>
     </div>
   );
+}
+
+function formatRsvpCategory(rsvp: RSVPRecord) {
+  if (!rsvp.guest_category) {
+    return "Not provided";
+  }
+
+  if (rsvp.guest_category === "Others" && rsvp.guest_category_other) {
+    return `Others - ${rsvp.guest_category_other}`;
+  }
+
+  return rsvp.guest_category;
 }

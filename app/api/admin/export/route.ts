@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     full_name: rsvp.full_name,
     email: rsvp.email,
     phone: rsvp.phone,
+    category: formatRsvpCategory(rsvp),
     attending_traditional: rsvp.attending_traditional,
     attending_finale: rsvp.attending_finale,
     guest_count: rsvp.guest_count,
@@ -45,4 +46,16 @@ export async function GET(request: NextRequest) {
       "Content-Disposition": `attachment; filename="wedding-rsvps${event ? `-${event}` : ""}.csv"`,
     },
   });
+}
+
+function formatRsvpCategory(rsvp: Awaited<ReturnType<typeof getAllRsvps>>[number]) {
+  if (!rsvp.guest_category) {
+    return "";
+  }
+
+  if (rsvp.guest_category === "Others" && rsvp.guest_category_other) {
+    return `Others - ${rsvp.guest_category_other}`;
+  }
+
+  return rsvp.guest_category;
 }

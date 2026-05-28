@@ -23,33 +23,63 @@ export const mealPreferenceSchema = z.enum([
   "Other",
 ]);
 
+export const rsvpCategoryOptions = [
+  "Bride's Family",
+  "Groom's Family",
+  "Friends of the Bride",
+  "Friends of the Groom",
+  "Brides Church Family",
+  "Group Church Family",
+  "Bride's Father",
+  "Bride's Mother",
+  "Others",
+] as const;
+
+export const rsvpCategorySchema = z.enum(rsvpCategoryOptions);
+
+function requiredText(message: string) {
+  return z.string({ error: message }).trim().min(1, message);
+}
+
+const requiredMealPreferenceSchema = requiredText("Meal preference is required.")
+  .refine((value) => mealPreferenceSchema.safeParse(value).success, {
+    message: "Please select a valid meal preference.",
+  })
+  .transform((value) => value as z.infer<typeof mealPreferenceSchema>);
+
+const requiredRsvpCategorySchema = requiredText("Category is required.")
+  .refine((value) => rsvpCategorySchema.safeParse(value).success, {
+    message: "Please select a valid category.",
+  })
+  .transform((value) => value as z.infer<typeof rsvpCategorySchema>);
+
 export const submitRsvpSchema = z
   .object({
     guestId: z.string().uuid("Invalid guest record."),
-    fullName: z.string().trim().min(2, "Full name is required.").max(120),
-    email: z
-      .string()
-      .trim()
-      .optional()
-      .or(z.literal(""))
-      .refine((value) => !value || z.email().safeParse(value).success, {
-        message: "Please enter a valid email address.",
-      }),
-    phone: z
-      .string()
-      .trim()
-      .optional()
-      .or(z.literal(""))
-      .refine((value) => !value || /^[+()0-9\s-]{7,24}$/.test(value), {
+    fullName: requiredText("Full name is required.")
+      .pipe(z.string().min(2, "Full name is required.").max(120)),
+    email: requiredText("Email address is required.")
+      .pipe(z.email("Please enter a valid email address.")),
+    phone: requiredText("Phone number is required.").refine(
+      (value) => /^[+()0-9\s-]{7,24}$/.test(value),
+      {
         message: "Please enter a valid phone number.",
-      }),
+      },
+    ),
+    category: requiredRsvpCategorySchema,
+    categoryOther: z.string().trim().max(120).optional().or(z.literal("")),
     attendingTraditional: z.boolean(),
     attendingFinale: z.boolean(),
     guestCount: z.number().int().min(0).max(20),
-    mealPreference: mealPreferenceSchema.optional(),
-    allergies: z.string().trim().max(500).optional().or(z.literal("")),
-    songRequest: z.string().trim().max(160).optional().or(z.literal("")),
-    messageToCouple: z.string().trim().max(800).optional().or(z.literal("")),
+    mealPreference: requiredMealPreferenceSchema,
+    allergies: requiredText("Please enter dietary requirements, or type None.").pipe(
+      z.string().max(500),
+    ),
+    songRequest: requiredText("Please enter a song request, or type None.")
+      .pipe(z.string().max(160)),
+    messageToCouple: requiredText("Please leave a message, or type None.").pipe(
+      z.string().max(800),
+    ),
   })
   .superRefine((data, ctx) => {
     const attendingAny = data.attendingTraditional || data.attendingFinale;
@@ -69,6 +99,14 @@ export const submitRsvpSchema = z
         message: "Guest count can only be 0 if you are not attending either event.",
       });
     }
+
+    if (data.category === "Others" && !data.categoryOther?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["categoryOther"],
+        message: "Please indicate your category.",
+      });
+    }
   });
 
 export const adminGuestSchema = z.object({
@@ -86,3 +124,4 @@ export const adminGuestSchema = z.object({
 });
 
 export type SubmitRsvpInput = z.infer<typeof submitRsvpSchema>;
+export type SubmitRsvpFormValues = z.input<typeof submitRsvpSchema>;

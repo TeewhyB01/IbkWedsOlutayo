@@ -7,11 +7,17 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { submitRsvpSchema, type SubmitRsvpInput } from "@/lib/validations";
+import {
+  rsvpCategoryOptions,
+  submitRsvpSchema,
+  type SubmitRsvpFormValues,
+  type SubmitRsvpInput,
+} from "@/lib/validations";
 import type { PublicGuest } from "@/types";
 
 const mealOptions = ["No preference", "Vegetarian", "Vegan", "Halal", "Other"] as const;
 type MealPreference = (typeof mealOptions)[number];
+type RsvpCategory = (typeof rsvpCategoryOptions)[number];
 
 export function RSVPForm({
   guest,
@@ -35,13 +41,15 @@ export function RSVPForm({
     control,
     setValue,
     formState: { errors },
-  } = useForm<SubmitRsvpInput>({
+  } = useForm<SubmitRsvpFormValues, unknown, SubmitRsvpInput>({
     resolver: zodResolver(submitRsvpSchema),
     defaultValues: {
       guestId: guest.id,
       fullName: existing?.fullName ?? guest.guestName,
       email: existing?.email ?? "",
       phone: existing?.phone ?? "",
+      category: normaliseCategory(existing?.category) ?? "",
+      categoryOther: existing?.categoryOther ?? "",
       attendingTraditional:
         existing?.attendingTraditional ?? (canAttendTraditional ? true : false),
       attendingFinale: existing?.attendingFinale ?? (canAttendFinale ? true : false),
@@ -56,6 +64,7 @@ export function RSVPForm({
   const attendingTraditional = useWatch({ control, name: "attendingTraditional" });
   const attendingFinale = useWatch({ control, name: "attendingFinale" });
   const guestCount = useWatch({ control, name: "guestCount" });
+  const category = useWatch({ control, name: "category" });
 
   useEffect(() => {
     if (!canAttendTraditional) {
@@ -74,6 +83,12 @@ export function RSVPForm({
       setValue("guestCount", 1, { shouldValidate: true });
     }
   }, [attendingFinale, attendingTraditional, guestCount, setValue]);
+
+  useEffect(() => {
+    if (category !== "Others") {
+      setValue("categoryOther", "", { shouldValidate: true });
+    }
+  }, [category, setValue]);
 
   return (
     <form
@@ -104,6 +119,7 @@ export function RSVPForm({
             autoComplete="name"
             {...register("fullName")}
             aria-invalid={Boolean(errors.fullName)}
+            required
           />
         </Field>
         <Field label="Email Address" error={errors.email?.message}>
@@ -113,6 +129,7 @@ export function RSVPForm({
             autoComplete="email"
             {...register("email")}
             aria-invalid={Boolean(errors.email)}
+            required
           />
         </Field>
         <Field label="Phone Number" error={errors.phone?.message}>
@@ -122,8 +139,36 @@ export function RSVPForm({
             autoComplete="tel"
             {...register("phone")}
             aria-invalid={Boolean(errors.phone)}
+            required
           />
         </Field>
+        <Field label="Category" error={errors.category?.message}>
+          <select
+            className={inputClass}
+            {...register("category")}
+            aria-invalid={Boolean(errors.category)}
+            required
+          >
+            <option value="">Select category</option>
+            {rsvpCategoryOptions.map((option) => (
+              <option key={option}>{option}</option>
+            ))}
+          </select>
+        </Field>
+        {category === "Others" ? (
+          <Field
+            label="Please indicate"
+            error={errors.categoryOther?.message}
+            className="md:col-span-2"
+          >
+            <input
+              className={inputClass}
+              {...register("categoryOther")}
+              aria-invalid={Boolean(errors.categoryOther)}
+              required
+            />
+          </Field>
+        ) : null}
         <Field label="Number of Guests Attending" error={errors.guestCount?.message}>
           <input
             className={inputClass}
@@ -132,6 +177,7 @@ export function RSVPForm({
             max={guest.allowedGuestCount}
             {...register("guestCount", { valueAsNumber: true })}
             aria-invalid={Boolean(errors.guestCount)}
+            required
           />
         </Field>
       </div>
@@ -159,7 +205,12 @@ export function RSVPForm({
       </fieldset>
 
       <Field label="Meal Preference" error={errors.mealPreference?.message} className="mt-7">
-        <select className={inputClass} {...register("mealPreference")}>
+        <select
+          className={inputClass}
+          {...register("mealPreference")}
+          aria-invalid={Boolean(errors.mealPreference)}
+          required
+        >
           {mealOptions.map((option) => (
             <option key={option}>{option}</option>
           ))}
@@ -168,15 +219,35 @@ export function RSVPForm({
 
       <div className="mt-5 grid gap-5 md:grid-cols-2">
         <Field label="Allergies or Dietary Requirements" error={errors.allergies?.message}>
-          <textarea className={textareaClass} rows={4} {...register("allergies")} />
+          <textarea
+            className={textareaClass}
+            rows={4}
+            placeholder="None if not applicable"
+            {...register("allergies")}
+            aria-invalid={Boolean(errors.allergies)}
+            required
+          />
         </Field>
         <Field label="Song Request" error={errors.songRequest?.message}>
-          <textarea className={textareaClass} rows={4} {...register("songRequest")} />
+          <textarea
+            className={textareaClass}
+            rows={4}
+            placeholder="None if not applicable"
+            {...register("songRequest")}
+            aria-invalid={Boolean(errors.songRequest)}
+            required
+          />
         </Field>
       </div>
 
       <Field label="Message to the Couple" error={errors.messageToCouple?.message} className="mt-5">
-        <textarea className={textareaClass} rows={5} {...register("messageToCouple")} />
+        <textarea
+          className={textareaClass}
+          rows={5}
+          {...register("messageToCouple")}
+          aria-invalid={Boolean(errors.messageToCouple)}
+          required
+        />
       </Field>
 
       {error ? <p className="mt-5 text-sm font-semibold text-burgundy">{error}</p> : null}
@@ -198,6 +269,12 @@ function normaliseMealPreference(value?: string): MealPreference {
   return mealOptions.includes(value as MealPreference)
     ? (value as MealPreference)
     : "No preference";
+}
+
+function normaliseCategory(value?: string): RsvpCategory | null {
+  return rsvpCategoryOptions.includes(value as RsvpCategory)
+    ? (value as RsvpCategory)
+    : null;
 }
 
 function Field({

@@ -23,6 +23,7 @@ export async function GET() {
     "Registered Name": rsvp.full_name,
     Email: rsvp.email ?? "",
     Phone: rsvp.phone ?? "",
+    Category: formatRsvpCategory(rsvp),
     "Guest Count": rsvp.guest_count,
     "Attending Traditional Wedding": eventAttendance(rsvp.attending_traditional),
     "Attending Grand Finale": eventAttendance(rsvp.attending_finale),
@@ -46,4 +47,16 @@ export async function GET() {
       "Cache-Control": "no-store",
     },
   });
+}
+
+function formatRsvpCategory(rsvp: Awaited<ReturnType<typeof getAllRsvps>>[number]) {
+  if (!rsvp.guest_category) {
+    return "";
+  }
+
+  if (rsvp.guest_category === "Others" && rsvp.guest_category_other) {
+    return `Others - ${rsvp.guest_category_other}`;
+  }
+
+  return rsvp.guest_category;
 }

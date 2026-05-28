@@ -119,6 +119,9 @@ export default async function AdminPage({
                     {rsvp.phone ?? "Not provided"}
                   </p>
                   <p className="mt-1 text-xs leading-6 text-muted">
+                    Category: {formatRsvpCategory(rsvp)}
+                  </p>
+                  <p className="mt-1 text-xs leading-6 text-muted">
                     Traditional Wedding: {rsvp.attending_traditional ? "Yes" : "No"} / Grand
                     Finale: {rsvp.attending_finale ? "Yes" : "No"}
                   </p>
@@ -180,6 +183,7 @@ export default async function AdminPage({
                     <div className="mt-3 grid gap-2 text-xs leading-6 text-ivory/72 md:grid-cols-2">
                       <p>Email: {rsvp.email ?? "Not provided"}</p>
                       <p>Phone: {rsvp.phone ?? "Not provided"}</p>
+                      <p>Category: {formatRsvpCategory(rsvp)}</p>
                       <p>Guests attending: {rsvp.guest_count}</p>
                       <p>
                         Events: {rsvp.attending_traditional ? "Traditional Wedding" : ""}
@@ -221,6 +225,7 @@ export default async function AdminPage({
 
 function getRsvpNotes(rsvp: RSVPRecord) {
   const notes = [
+    rsvp.guest_category ? `Category: ${formatRsvpCategory(rsvp)}` : null,
     rsvp.meal_preference ? `Meal: ${rsvp.meal_preference}` : null,
     rsvp.allergies ? `Dietary: ${rsvp.allergies}` : null,
     rsvp.song_request ? `Song: ${rsvp.song_request}` : null,
@@ -228,6 +233,18 @@ function getRsvpNotes(rsvp: RSVPRecord) {
   ].filter(Boolean);
 
   return notes.length > 0 ? notes.join(" / ") : "No notes added.";
+}
+
+function formatRsvpCategory(rsvp: RSVPRecord) {
+  if (!rsvp.guest_category) {
+    return "Not provided";
+  }
+
+  if (rsvp.guest_category === "Others" && rsvp.guest_category_other) {
+    return `Others - ${rsvp.guest_category_other}`;
+  }
+
+  return rsvp.guest_category;
 }
 
 function SnapshotLink({

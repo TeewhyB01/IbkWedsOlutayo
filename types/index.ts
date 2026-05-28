@@ -111,6 +111,8 @@ export type RSVPRecord = {
   full_name: string;
   email: string | null;
   phone: string | null;
+  guest_category?: string | null;
+  guest_category_other?: string | null;
   attending_traditional: boolean;
   attending_finale: boolean;
   guest_count: number;
@@ -136,6 +138,8 @@ export type PublicGuest = {
     fullName: string;
     email?: string;
     phone?: string;
+    category?: string;
+    categoryOther?: string;
     attendingTraditional: boolean;
     attendingFinale: boolean;
     guestCount: number;

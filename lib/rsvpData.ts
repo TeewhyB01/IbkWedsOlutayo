@@ -35,6 +35,8 @@ export function toPublicGuest(
           fullName: existingRsvp.full_name,
           email: existingRsvp.email ?? undefined,
           phone: existingRsvp.phone ?? undefined,
+          category: existingRsvp.guest_category ?? undefined,
+          categoryOther: existingRsvp.guest_category_other ?? undefined,
           attendingTraditional: existingRsvp.attending_traditional,
           attendingFinale: existingRsvp.attending_finale,
           guestCount: existingRsvp.guest_count,
@@ -120,15 +122,17 @@ export async function createRsvp(
   guest: GuestRecord,
   input: {
     fullName: string;
-    email?: string;
-    phone?: string;
+    email: string;
+    phone: string;
+    category: string;
+    categoryOther?: string;
     attendingTraditional: boolean;
     attendingFinale: boolean;
     guestCount: number;
-    mealPreference?: string;
-    allergies?: string;
-    songRequest?: string;
-    messageToCouple?: string;
+    mealPreference: string;
+    allergies: string;
+    songRequest: string;
+    messageToCouple: string;
   },
 ) {
   const now = new Date().toISOString();
@@ -138,6 +142,9 @@ export async function createRsvp(
     full_name: input.fullName,
     email: input.email || null,
     phone: input.phone || null,
+    guest_category: input.category,
+    guest_category_other:
+      input.category === "Others" ? input.categoryOther || null : null,
     attending_traditional: input.attendingTraditional,
     attending_finale: input.attendingFinale,
     guest_count: input.guestCount,
