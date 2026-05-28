@@ -43,6 +43,66 @@ export function toCsv(rows: Record<string, unknown>[]) {
   return lines.join("\n");
 }
 
+function xmlEscape(value: unknown) {
+  const stringValue = value == null ? "" : String(value);
+
+  return stringValue
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+export function toExcelXml({
+  rows,
+  worksheetName,
+}: {
+  rows: Record<string, unknown>[];
+  worksheetName: string;
+}) {
+  const headers = rows.length > 0 ? Object.keys(rows[0]) : ["No records"];
+  const headerRow = headers
+    .map(
+      (header) =>
+        `<Cell><Data ss:Type="String">${xmlEscape(header)}</Data></Cell>`,
+    )
+    .join("");
+  const dataRows = rows
+    .map((row) =>
+      `<Row>${headers
+        .map((header) => {
+          const value = row[header];
+          const type = typeof value === "number" ? "Number" : "String";
+
+          return `<Cell><Data ss:Type="${type}">${xmlEscape(value)}</Data></Cell>`;
+        })
+        .join("")}</Row>`,
+    )
+    .join("");
+
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1" ss:Color="#FBF6EC"/>
+      <Interior ss:Color="#0B513F" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="${xmlEscape(worksheetName)}">
+    <Table>
+      <Row ss:StyleID="Header">${headerRow}</Row>
+      ${dataRows || `<Row><Cell><Data ss:Type="String">No registered guests yet.</Data></Cell></Row>`}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+}
+
 export function formatRelativeTime(value: string | Date) {
   const date = value instanceof Date ? value : new Date(value);
   const seconds = Math.round((date.getTime() - Date.now()) / 1000);

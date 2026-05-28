@@ -119,10 +119,16 @@ export async function getAllRsvps() {
   }
 
   loadDemoStore();
-  return Array.from(demoRsvps.values()).map((rsvp) => ({
-    ...rsvp,
-    guests: demoGuests.find((guest) => guest.id === rsvp.guest_id) ?? null,
-  }));
+  return Array.from(demoRsvps.values())
+    .map((rsvp) => ({
+      ...rsvp,
+      guests: demoGuests.find((guest) => guest.id === rsvp.guest_id) ?? null,
+    }))
+    .sort(
+      (first, second) =>
+        new Date(second.submitted_at).getTime() -
+        new Date(first.submitted_at).getTime(),
+    );
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
