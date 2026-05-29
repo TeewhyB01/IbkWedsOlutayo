@@ -31,6 +31,7 @@ export function RSVPForm({
   error?: string | null;
 }) {
   const existing = guest.existingRsvp;
+  const displayGuestName = getDisplayGuestName(guest.guestName);
   const canAttendTraditional =
     guest.invitationType === "traditional" || guest.invitationType === "both";
   const canAttendFinale = guest.invitationType === "finale" || guest.invitationType === "both";
@@ -45,7 +46,7 @@ export function RSVPForm({
     resolver: zodResolver(submitRsvpSchema),
     defaultValues: {
       guestId: guest.id,
-      fullName: existing?.fullName ?? guest.guestName,
+      fullName: existing?.fullName ?? "",
       email: existing?.email ?? "",
       phone: existing?.phone ?? "",
       category: normaliseCategory(existing?.category) ?? "",
@@ -98,7 +99,7 @@ export function RSVPForm({
       <div className="mb-8 rounded-[1.25rem] border border-gold/20 bg-ivory/80 p-5">
         <p className="text-sm font-semibold text-burgundy">Invitation found</p>
         <h2 className="mt-2 font-serif text-4xl font-semibold text-green">
-          {guest.guestName}
+          {displayGuestName}
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">
           This invitation allows a maximum of {guest.allowedGuestCount} guest(s).
@@ -117,6 +118,7 @@ export function RSVPForm({
           <input
             className={inputClass}
             autoComplete="name"
+            placeholder="Enter your full name"
             {...register("fullName")}
             aria-invalid={Boolean(errors.fullName)}
             required
@@ -275,6 +277,12 @@ function normaliseCategory(value?: string): RsvpCategory | null {
   return rsvpCategoryOptions.includes(value as RsvpCategory)
     ? (value as RsvpCategory)
     : null;
+}
+
+function getDisplayGuestName(value: string) {
+  return /^Guest\s+\d+$/i.test(value.trim())
+    ? "Your invitation code is confirmed"
+    : value;
 }
 
 function Field({
