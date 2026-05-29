@@ -10,9 +10,7 @@ import path from "node:path";
 import type { GuestRecord, RSVPRecord } from "@/types";
 
 const generatedGuestCount = 300;
-const demoStoreDirectory = process.env.VERCEL
-  ? tmpdir()
-  : path.join(process.cwd(), ".next", "cache");
+const demoStoreDirectory = path.join(tmpdir(), "becoming-bensons");
 const demoStorePath = path.join(
   demoStoreDirectory,
   "becoming-bensons-demo-store.json",
